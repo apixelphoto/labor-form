@@ -617,6 +617,22 @@ async function submitForm() {
     const fname=`勞務報酬單_${name}_${(fd||'').replace(/-/g,'')}.pdf`;
     pdf.save(fname);
 
+    // Upload to Google Drive
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzAUyrs6V1Ei_F1NIgI_3BXlY6gTHAoAqvYiMhIJE4b0GsGPaOeSed0nwevvAKTXk3Q/exec';
+    try {
+      const pdfBase64 = img.split(',')[1]; // reuse img data from html2canvas? No - get from pdf
+      const pdfBlob = pdf.output('datauristring');
+      const pdfB64 = pdfBlob.split(',')[1];
+      await fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: fname, pdf: pdfB64 })
+      });
+    } catch(driveErr) {
+      console.error('Drive upload error:', driveErr);
+    }
+
     // Send email
     try {
       await emailjs.send('service_qd8hzsk','template_nundp5e',{
