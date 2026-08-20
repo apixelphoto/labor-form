@@ -147,7 +147,7 @@ input[type=date]::-webkit-calendar-picker-indicator{opacity:.5;cursor:pointer}
 <!-- 填表日期 -->
 <div class="card">
   <div class="field">
-    <label>填表日期</label>
+    <label>工作日期 <span class="req">*</span></label>
     <input type="date" id="fillDate" />
   </div>
 </div>
@@ -468,6 +468,8 @@ function validate() {
   const by = document.getElementById('bY').value.trim();
   const bm = document.getElementById('bM').value.trim();
   const bd = document.getElementById('bD').value.trim();
+  const fd_check = document.getElementById('fillDate').value;
+  if (!fd_check) { showToast('⚠ 請選擇工作日期'); return false; }
   if (!name) { showToast('⚠ 請填寫姓名'); return false; }
   if (!idNum) { showToast('⚠ 請填寫身分證字號'); return false; }
   if (!regAddr) { showToast('⚠ 請填寫戶籍地址'); return false; }
@@ -499,7 +501,7 @@ function resetForm() {
     z.querySelectorAll('.up-ico,.up-lbl,.up-hint').forEach(e=>e.style.display='');
   });
   document.getElementById('idReqNote').style.display='none';
-  document.getElementById('fillDate').value=new Date().toISOString().split('T')[0];
+  // 工作日期留空，由填表人自行選擇
   showToast('✓ 已清除');
 }
 
@@ -510,7 +512,7 @@ function showToast(msg,ms=2200){
   setTimeout(()=>t.classList.remove('show'),ms);
 }
 
-document.getElementById('fillDate').value=new Date().toISOString().split('T')[0];
+// 工作日期留空，由填表人自行選擇
 
 // Crop signature to actual drawn content
 function cropSignature(canvas) {
@@ -562,7 +564,7 @@ async function submitForm() {
   const payMethod=document.querySelector('input[name=pay]:checked').value;
 
   // Fill PDF target
-  document.getElementById('pt-date').textContent='填表日期：'+(fd||'—');
+  document.getElementById('pt-date').textContent='工作日期：'+(fd||'—');
   document.getElementById('pt-name').textContent=name;
   document.getElementById('pt-idnum').textContent=document.getElementById('idNum').value||'—';
   document.getElementById('pt-reg').textContent=document.getElementById('regAddr').value||'—';
