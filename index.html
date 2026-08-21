@@ -731,28 +731,51 @@ async function submitForm() {
     const fname=`勞務報酬單_${name}_${(fd||'').replace(/-/g,'')}.pdf`;
     pdf.save(fname);
 
-    // Upload to Google Drive
+    // Upload to Google Drive via form submission (bypass CORS)
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzAUyrs6V1Ei_F1NIgI_3BXlY6gTHAoAqvYiMhIJE4b0GsGPaOeSed0nwevvAKTXk3Q/exec';
     try {
       const pdfBlob = pdf.output('datauristring');
       const pdfB64 = pdfBlob.split(',')[1];
       const jobVal = document.querySelector('input[name=job]:checked');
       const jobText = jobVal ? (jobVal.value === 'other' ? document.getElementById('jobOther').value||'其他' : jobVal.value) : '—';
-      await fetch(GAS_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: fname,
-          pdf: pdfB64,
-          name: name,
-          fill_date: fd||'—',
-          job: jobText,
-          pay_method: payMethod,
-          income: fmt(v),
-          net: fmt(net)
-        })
+      
+      const payload = JSON.stringify({
+        filename: fname,
+        pdf: pdfB64,
+        name: name,
+        fill_date: fd||'—',
+        job: jobText,
+        pay_method: payMethod,
+        income: fmt(v),
+        net: fmt(net)
       });
+
+      // Use hidden iframe form POST to bypass CORS
+      const ifrm = document.createElement('iframe');
+      ifrm.name = 'gasTarget';
+      ifrm.style.display = 'none';
+      document.body.appendChild(ifrm);
+
+      const frm = document.createElement('form');
+      frm.method = 'POST';
+      frm.action = GAS_URL;
+      frm.target = 'gasTarget';
+      frm.style.display = 'none';
+
+      const inp = document.createElement('input');
+      inp.type = 'hidden';
+      inp.name = 'data';
+      inp.value = payload;
+      frm.appendChild(inp);
+      document.body.appendChild(frm);
+      frm.submit();
+
+      // Cleanup after 5s
+      setTimeout(() => {
+        document.body.removeChild(frm);
+        document.body.removeChild(ifrm);
+      }, 5000);
+
     } catch(driveErr) {
       console.error('Drive upload error:', driveErr);
     }
